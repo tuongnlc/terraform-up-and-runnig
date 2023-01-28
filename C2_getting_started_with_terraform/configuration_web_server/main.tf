@@ -1,8 +1,9 @@
-"""
-  We define 2 main part:
+/*
+    We define 2 main part:
     1. Filewall rule cho phép gọi vào port 8080
     2. VM với 1 cái public ip-address
-"""
+    3. Chúng ta sử dụng variable từ file variables.tf
+*/
 
 provider "google" { 
     project = "care-dataservice"
@@ -11,7 +12,7 @@ provider "google" {
 
 #1. Filewall rule cho phép gọi vào port 8080
 resource "google_compute_firewall" "firewall" {
-  name    = "test-firewall"
+  name    = var.firewall_rule
   network = "default"
 
   allow {
@@ -20,16 +21,12 @@ resource "google_compute_firewall" "firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "8080", "1000-2000"]
+    ports    = [var.server_port]
   }
 
   source_ranges = ["0.0.0.0/0"]
 
   source_tags = ["web"]
-}
-
-resource "google_compute_network" "default" {
-  name = "test-network"
 }
 
 #2. 2. VM với 1 cái public ip-address
@@ -48,7 +45,7 @@ resource "google_compute_instance" "default" {
   metadata_startup_script = <<-EOF
               #!/bin/bash
               echo "Hello, World" > index.html
-              nohup busybox httpd -f -p 8080 &
+              nohup busybox httpd -f -p ${var.server_port} &
               EOF
 
   boot_disk {
